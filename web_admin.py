@@ -17,6 +17,92 @@ class AdminService:
     def __init__(self):
         pass
     
+    def get_demo_data(self):
+        """Возвращает демонстрационные данные для работы без базы данных"""
+        return {
+            "stats": {
+                "total_users": 5,
+                "premium_users": 3,
+                "total_bots": 5,
+                "active_bots": 4,
+                "recent_users": 2,
+                "recent_bots": 3,
+                "recent_generations": 7,
+                "monthly_revenue": 897,
+                "total_revenue": 10764
+            },
+            "users": [
+                {
+                    "id": 1,
+                    "telegram_id": 1704897414,
+                    "username": "admin_user",
+                    "first_name": "Админ",
+                    "last_name": "Пользователь",
+                    "is_premium": True,
+                    "free_generations_used": 2,
+                    "premium_generations_used": 5,
+                    "created_at": "2024-01-15T10:30:00Z",
+                    "last_activity": "2024-01-15T10:30:00Z",
+                    "bots_count": 2,
+                    "is_admin": True
+                },
+                {
+                    "id": 2,
+                    "telegram_id": 6491802621,
+                    "username": "ilya_ttr",
+                    "first_name": "Илья",
+                    "last_name": "Тестер",
+                    "is_premium": True,
+                    "free_generations_used": 2,
+                    "premium_generations_used": 3,
+                    "created_at": "2024-01-14T15:45:00Z",
+                    "last_activity": "2024-01-14T15:45:00Z",
+                    "bots_count": 1,
+                    "is_admin": True
+                }
+            ],
+            "bots": [
+                {
+                    "id": 1,
+                    "name": "Помощник по программированию",
+                    "description": "Бот помогает с вопросами по программированию",
+                    "status": "active",
+                    "owner_username": "admin_user",
+                    "created_at": "2024-01-15T10:30:00Z",
+                    "last_updated": "2024-01-15T10:30:00Z"
+                },
+                {
+                    "id": 2,
+                    "name": "Консультант по бизнесу",
+                    "description": "Бот консультирует по вопросам бизнеса",
+                    "status": "active",
+                    "owner_username": "ilya_ttr",
+                    "created_at": "2024-01-14T15:45:00Z",
+                    "last_updated": "2024-01-14T15:45:00Z"
+                }
+            ],
+            "generations": [
+                {
+                    "id": 1,
+                    "user_username": "admin_user",
+                    "bot_name": "Помощник по программированию",
+                    "prompt": "Создай бота для помощи с программированием",
+                    "status": "completed",
+                    "created_at": "2024-01-15T10:30:00Z",
+                    "completed_at": "2024-01-15T10:30:00Z"
+                },
+                {
+                    "id": 2,
+                    "user_username": "ilya_ttr",
+                    "bot_name": "Консультант по бизнесу",
+                    "prompt": "Создай бота-консультанта по бизнесу",
+                    "status": "completed",
+                    "created_at": "2024-01-14T15:45:00Z",
+                    "completed_at": "2024-01-14T15:45:00Z"
+                }
+            ]
+        }
+    
     def get_statistics(self, db: Session) -> Dict[str, Any]:
         """Получает статистику системы"""
         total_users = db.query(User).count()
@@ -131,12 +217,24 @@ class AdminService:
 def dashboard():
     """Главная страница - Dashboard"""
     try:
-        db = next(get_db())
-        admin_service = AdminService()
-        stats = admin_service.get_statistics(db)
-        recent_users = admin_service.get_recent_users(db, limit=5)
-        recent_bots = admin_service.get_recent_bots(db, limit=5)
-        recent_generations = admin_service.get_recent_generations(db, limit=5)
+        # Проверяем, есть ли база данных
+        try:
+            db = next(get_db())
+            admin_service = AdminService()
+            stats = admin_service.get_statistics(db)
+            recent_users = admin_service.get_recent_users(db, limit=5)
+            recent_bots = admin_service.get_recent_bots(db, limit=5)
+            recent_generations = admin_service.get_recent_generations(db, limit=5)
+            db.close()
+        except Exception as db_error:
+            logger.warning(f"База данных недоступна: {db_error}")
+            # Возвращаем демонстрационные данные
+            admin_service = AdminService()
+            demo_data = admin_service.get_demo_data()
+            stats = demo_data["stats"]
+            recent_users = demo_data["users"][:2]
+            recent_bots = demo_data["bots"][:2]
+            recent_generations = demo_data["generations"][:2]
         
         return render_template("dashboard.html", 
             stats=stats,
@@ -147,23 +245,28 @@ def dashboard():
     except Exception as e:
         logger.error(f"Ошибка в dashboard: {e}")
         return render_template("error.html", error="Ошибка загрузки dashboard")
-    finally:
-        db.close()
 
 @app.route("/users")
 def users():
     """Страница управления пользователями"""
     try:
-        db = next(get_db())
-        admin_service = AdminService()
-        users_list = admin_service.get_users(db)
+        # Проверяем, есть ли база данных
+        try:
+            db = next(get_db())
+            admin_service = AdminService()
+            users_list = admin_service.get_users(db)
+            db.close()
+        except Exception as db_error:
+            logger.warning(f"База данных недоступна: {db_error}")
+            # Возвращаем демонстрационные данные
+            admin_service = AdminService()
+            demo_data = admin_service.get_demo_data()
+            users_list = demo_data["users"]
         
         return render_template("users.html", users=users_list)
     except Exception as e:
         logger.error(f"Ошибка в users: {e}")
         return render_template("error.html", error="Ошибка загрузки пользователей")
-    finally:
-        db.close()
 
 @app.route("/bots")
 def bots():
@@ -214,17 +317,42 @@ def monetization():
 def admins():
     """Страница управления админами"""
     try:
-        db = next(get_db())
-        admin_service = AdminService()
-        users_list = admin_service.get_users(db)
-        admins_list = [user for user in users_list if user.get('is_admin', False)]
+        # Проверяем, есть ли база данных
+        try:
+            db = next(get_db())
+            admin_service = AdminService()
+            users_list = admin_service.get_users(db)
+            admins_list = [user for user in users_list if user.get('is_admin', False)]
+            db.close()
+        except Exception as db_error:
+            logger.warning(f"База данных недоступна: {db_error}")
+            # Возвращаем тестовые данные для демонстрации
+            admins_list = [
+                {
+                    "id": 1,
+                    "telegram_id": 1704897414,
+                    "username": "admin_user",
+                    "first_name": "Админ",
+                    "last_name": "Пользователь",
+                    "is_premium": True,
+                    "is_admin": True
+                },
+                {
+                    "id": 2,
+                    "telegram_id": 6491802621,
+                    "username": "ilya_ttr",
+                    "first_name": "Илья",
+                    "last_name": "Тестер",
+                    "is_premium": True,
+                    "is_admin": True
+                }
+            ]
+            users_list = admins_list
         
         return render_template("admins.html", admins=admins_list, all_users=users_list)
     except Exception as e:
         logger.error(f"Ошибка в admins: {e}")
         return render_template("error.html", error="Ошибка загрузки админов")
-    finally:
-        db.close()
 
 @app.route("/user-management")
 def user_management():
