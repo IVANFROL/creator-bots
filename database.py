@@ -60,7 +60,15 @@ class Generation(Base):
     bot = relationship("Bot", backref="generations")
 
 # Database setup
-engine = create_engine(Config.DATABASE_URL)
+# Для Vercel используем PostgreSQL, для локальной разработки - SQLite
+database_url = Config.DATABASE_URL
+if database_url.startswith('sqlite'):
+    # Локальная разработка
+    engine = create_engine(database_url)
+else:
+    # Продакшн (Vercel)
+    engine = create_engine(database_url, pool_pre_ping=True)
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def create_tables():

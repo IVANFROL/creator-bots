@@ -601,5 +601,12 @@ if __name__ == "__main__":
     # Создаем таблицы при запуске
     create_tables()
     
+    # Инициализируем тестовые данные для локальной разработки
+    try:
+        from init_db import init_database
+        init_database()
+    except Exception as e:
+        print(f"Ошибка инициализации БД: {e}")
+    
     # Запускаем Flask приложение
     app.run(host="0.0.0.0", port=8001, debug=True)
