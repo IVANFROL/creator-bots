@@ -1,0 +1,248 @@
+{% extends "base.html" %}
+
+{% block title %}Боты - Bot Creator Admin{% endblock %}
+{% block page_title %}Управление ботами{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-robot me-2"></i>
+                    Список ботов
+                </h5>
+            </div>
+            <div class="col-auto">
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Поиск ботов..." id="searchInput">
+                    <button class="btn btn-outline-secondary" type="button">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Название</th>
+                        <th>Описание</th>
+                        <th>Владелец</th>
+                        <th>Статус</th>
+                        <th>Создан</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for bot in bots %}
+                    <tr>
+                        <td>{{ bot.id }}</td>
+                        <td>
+                            <strong>{{ bot.name }}</strong>
+                        </td>
+                        <td>
+                            <span class="text-muted">{{ bot.description[:50] }}{% if bot.description|length > 50 %}...{% endif %}</span>
+                        </td>
+                        <td>
+                            {% if bot.owner_username %}
+                                @{{ bot.owner_username }}
+                            {% else %}
+                                <span class="text-muted">ID: {{ bot.owner_id }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if bot.status == 'active' %}
+                                <span class="badge bg-success">
+                                    <i class="fas fa-check-circle me-1"></i>
+                                    Активен
+                                </span>
+                            {% elif bot.status == 'inactive' %}
+                                <span class="badge bg-warning">
+                                    <i class="fas fa-pause-circle me-1"></i>
+                                    Неактивен
+                                </span>
+                            {% elif bot.status == 'created' %}
+                                <span class="badge bg-info">
+                                    <i class="fas fa-plus-circle me-1"></i>
+                                    Создан
+                                </span>
+                            {% elif bot.status == 'error' %}
+                                <span class="badge bg-danger">
+                                    <i class="fas fa-exclamation-circle me-1"></i>
+                                    Ошибка
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ bot.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <small class="text-muted">
+                                {{ bot.created_at[:10] }}
+                            </small>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-primary" onclick="viewBot({{ bot.id }})">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-outline-{% if bot.status == 'active' %}warning{% else %}success{% endif %}" 
+                                        onclick="toggleBotStatus({{ bot.id }}, '{{ bot.status }}')">
+                                    <i class="fas fa-{% if bot.status == 'active' %}pause{% else %}play{% endif %}"></i>
+                                </button>
+                                <button class="btn btn-outline-danger" onclick="deleteBot({{ bot.id }})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer">
+        <div class="d-flex justify-content-between align-items-center">
+            <small class="text-muted">
+                Показано {{ bots|length }} ботов
+            </small>
+            <nav>
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" tabindex="-1">Предыдущая</a>
+                    </li>
+                    <li class="page-item active">
+                        <a class="page-link" href="#">1</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">2</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">3</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">Следующая</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- Bot Details Modal -->
+<div class="modal fade" id="botModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Детали бота</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="botModalBody">
+                <!-- Содержимое будет загружено динамически -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                <button type="button" class="btn btn-primary">Сохранить изменения</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Поиск ботов
+document.getElementById('searchInput').addEventListener('input', function(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    const rows = document.querySelectorAll('tbody tr');
+    
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        if (text.includes(searchTerm)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+});
+
+// Просмотр деталей бота
+function viewBot(botId) {
+    document.getElementById('botModalBody').innerHTML = `
+        <div class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Загрузка...</span>
+            </div>
+        </div>
+    `;
+    
+    const modal = new bootstrap.Modal(document.getElementById('botModal'));
+    modal.show();
+    
+    // Имитация загрузки данных
+    setTimeout(() => {
+        document.getElementById('botModalBody').innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Основная информация</h6>
+                    <p><strong>ID:</strong> ${botId}</p>
+                    <p><strong>Название:</strong> Bot_${botId}</p>
+                    <p><strong>Статус:</strong> <span class="badge bg-success">Активен</span></p>
+                </div>
+                <div class="col-md-6">
+                    <h6>Статистика</h6>
+                    <p><strong>Создан:</strong> 28.09.2024</p>
+                    <p><strong>Обновлен:</strong> 28.09.2024</p>
+                    <p><strong>Владелец:</strong> @username</p>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-12">
+                    <h6>Описание</h6>
+                    <p class="text-muted">Описание бота будет здесь...</p>
+                </div>
+            </div>
+        `;
+    }, 1000);
+}
+
+// Переключение статуса бота
+function toggleBotStatus(botId, currentStatus) {
+    const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+    const action = newStatus === 'active' ? 'активировать' : 'деактивировать';
+    
+    if (confirm(`Вы уверены, что хотите ${action} бота ${botId}?`)) {
+        fetch(`/api/bots/${botId}/status`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ status: newStatus })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Ошибка при обновлении статуса');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Ошибка при обновлении статуса');
+        });
+    }
+}
+
+// Удаление бота
+function deleteBot(botId) {
+    if (confirm(`Вы уверены, что хотите удалить бота ${botId}? Это действие нельзя отменить!`)) {
+        // Здесь можно добавить API для удаления бота
+        alert('Функция удаления будет добавлена в следующей версии');
+    }
+}
+</script>
+{% endblock %}

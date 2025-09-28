@@ -1,0 +1,276 @@
+{% extends "base.html" %}
+
+{% block title %}Генерации - Bot Creator Admin{% endblock %}
+{% block page_title %}История генераций{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-magic me-2"></i>
+                    История генераций
+                </h5>
+            </div>
+            <div class="col-auto">
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Поиск генераций..." id="searchInput">
+                    <button class="btn btn-outline-secondary" type="button">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Пользователь</th>
+                        <th>Промпт</th>
+                        <th>Статус</th>
+                        <th>Бот</th>
+                        <th>Создана</th>
+                        <th>Завершена</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for generation in generations %}
+                    <tr>
+                        <td>{{ generation.id }}</td>
+                        <td>
+                            <span class="text-muted">ID: {{ generation.user_id }}</span>
+                        </td>
+                        <td>
+                            <span class="text-muted">{{ generation.prompt[:50] }}{% if generation.prompt|length > 50 %}...{% endif %}</span>
+                        </td>
+                        <td>
+                            {% if generation.status == 'completed' %}
+                                <span class="badge bg-success">
+                                    <i class="fas fa-check-circle me-1"></i>
+                                    Завершена
+                                </span>
+                            {% elif generation.status == 'pending' %}
+                                <span class="badge bg-warning">
+                                    <i class="fas fa-clock me-1"></i>
+                                    В процессе
+                                </span>
+                            {% elif generation.status == 'failed' %}
+                                <span class="badge bg-danger">
+                                    <i class="fas fa-times-circle me-1"></i>
+                                    Ошибка
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ generation.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if generation.bot_id %}
+                                <span class="badge bg-info">Bot {{ generation.bot_id }}</span>
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <small class="text-muted">
+                                {{ generation.created_at[:10] }}
+                            </small>
+                        </td>
+                        <td>
+                            {% if generation.completed_at %}
+                                <small class="text-muted">
+                                    {{ generation.completed_at[:10] }}
+                                </small>
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-primary" onclick="viewGeneration({{ generation.id }})">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                {% if generation.status == 'completed' %}
+                                <button class="btn btn-outline-success" onclick="downloadCode({{ generation.id }})">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                                {% endif %}
+                                {% if generation.status == 'failed' %}
+                                <button class="btn btn-outline-warning" onclick="retryGeneration({{ generation.id }})">
+                                    <i class="fas fa-redo"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer">
+        <div class="d-flex justify-content-between align-items-center">
+            <small class="text-muted">
+                Показано {{ generations|length }} генераций
+            </small>
+            <nav>
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" tabindex="-1">Предыдущая</a>
+                    </li>
+                    <li class="page-item active">
+                        <a class="page-link" href="#">1</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">2</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">3</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">Следующая</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- Generation Details Modal -->
+<div class="modal fade" id="generationModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Детали генерации</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="generationModalBody">
+                <!-- Содержимое будет загружено динамически -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                <button type="button" class="btn btn-primary" onclick="downloadCode()">Скачать код</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Поиск генераций
+document.getElementById('searchInput').addEventListener('input', function(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    const rows = document.querySelectorAll('tbody tr');
+    
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        if (text.includes(searchTerm)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+});
+
+// Просмотр деталей генерации
+function viewGeneration(generationId) {
+    document.getElementById('generationModalBody').innerHTML = `
+        <div class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Загрузка...</span>
+            </div>
+        </div>
+    `;
+    
+    const modal = new bootstrap.Modal(document.getElementById('generationModal'));
+    modal.show();
+    
+    // Имитация загрузки данных
+    setTimeout(() => {
+        document.getElementById('generationModalBody').innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Основная информация</h6>
+                    <p><strong>ID:</strong> ${generationId}</p>
+                    <p><strong>Пользователь:</strong> ID: 123456789</p>
+                    <p><strong>Статус:</strong> <span class="badge bg-success">Завершена</span></p>
+                    <p><strong>Создана:</strong> 28.09.2024 18:00</p>
+                    <p><strong>Завершена:</strong> 28.09.2024 18:02</p>
+                </div>
+                <div class="col-md-6">
+                    <h6>Результат</h6>
+                    <p><strong>Бот ID:</strong> 1</p>
+                    <p><strong>Время генерации:</strong> 2 минуты</p>
+                    <p><strong>Размер кода:</strong> 1.2 KB</p>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-12">
+                    <h6>Промпт</h6>
+                    <div class="bg-light p-3 rounded">
+                        <p class="mb-0">Создай бота для интернет-магазина с каталогом товаров, корзиной и обработкой заказов</p>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-12">
+                    <h6>Сгенерированный код</h6>
+                    <div class="bg-dark text-light p-3 rounded">
+                        <pre class="mb-0"><code># Ecommerce Bot
+import logging
+from telegram import Update
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
+
+# ... код бота ...
+</code></pre>
+                    </div>
+                </div>
+            </div>
+        `;
+    }, 1000);
+}
+
+// Скачивание кода
+function downloadCode(generationId) {
+    if (generationId) {
+        // Скачиваем код конкретной генерации
+        const link = document.createElement('a');
+        link.href = `/api/generations/${generationId}/download`;
+        link.download = `bot_${generationId}.py`;
+        link.click();
+    } else {
+        // Скачиваем код из модального окна
+        alert('Скачивание кода...');
+    }
+}
+
+// Повторная генерация
+function retryGeneration(generationId) {
+    if (confirm(`Вы уверены, что хотите повторить генерацию ${generationId}?`)) {
+        fetch(`/api/generations/${generationId}/retry`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Ошибка при повторной генерации');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Ошибка при повторной генерации');
+        });
+    }
+}
+</script>
+{% endblock %}

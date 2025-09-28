@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Ошибка - Bot Creator Admin{% endblock %}
+{% block page_title %}Ошибка{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-exclamation-triangle fa-4x text-warning mb-4"></i>
+                <h3 class="card-title">Произошла ошибка</h3>
+                <p class="card-text text-muted">{{ error or "Неизвестная ошибка" }}</p>
+                <a href="/" class="btn btn-primary">
+                    <i class="fas fa-home me-2"></i>
+                    Вернуться на главную
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

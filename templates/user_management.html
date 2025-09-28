@@ -1,0 +1,478 @@
+{% extends "base.html" %}
+
+{% block title %}Управление пользователями - Bot Creator Admin{% endblock %}
+{% block page_title %}Управление попытками и подписками{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Поиск пользователя -->
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-search me-2"></i>
+                    Поиск пользователя по Telegram никнейму
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="input-group">
+                            <span class="input-group-text">@</span>
+                            <input type="text" class="form-control" id="usernameSearch" placeholder="Введите никнейм пользователя (без @)">
+                            <button class="btn btn-primary" type="button" onclick="searchUser()">
+                                <i class="fas fa-search me-2"></i>
+                                Найти
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Информация о пользователе -->
+    <div class="col-12 mb-4" id="userInfo" style="display: none;">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-user me-2"></i>
+                    Информация о пользователе
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>ID:</strong></td>
+                                <td id="userId"></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Telegram ID:</strong></td>
+                                <td id="userTelegramId"></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Никнейм:</strong></td>
+                                <td id="userUsername"></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Имя:</strong></td>
+                                <td id="userName"></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Статус:</strong></td>
+                                <td id="userStatus"></td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>Бесплатные попытки:</strong></td>
+                                <td id="userFreeGenerations"></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Премиум попытки:</strong></td>
+                                <td id="userPremiumGenerations"></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Премиум до:</strong></td>
+                                <td id="userPremiumExpires"></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Регистрация:</strong></td>
+                                <td id="userCreatedAt"></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Управление попытками -->
+    <div class="col-md-6 mb-4" id="generationsManagement" style="display: none;">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-plus-circle me-2"></i>
+                    Добавить попытки
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="addGenerationsForm">
+                    <div class="mb-3">
+                        <label for="freeGenerations" class="form-label">Бесплатные попытки</label>
+                        <input type="number" class="form-control" id="freeGenerations" min="0" value="0">
+                        <div class="form-text">Количество бесплатных попыток для добавления</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="premiumGenerations" class="form-label">Премиум попытки</label>
+                        <input type="number" class="form-control" id="premiumGenerations" min="0" value="0">
+                        <div class="form-text">Количество премиум попыток для добавления</div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>
+                        Добавить попытки
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Управление подпиской -->
+    <div class="col-md-6 mb-4" id="subscriptionManagement" style="display: none;">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-crown me-2"></i>
+                    Управление подпиской
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="subscriptionForm">
+                    <div class="mb-3">
+                        <label for="premiumDays" class="form-label">Дней подписки</label>
+                        <input type="number" class="form-control" id="premiumDays" min="1" max="365" value="30">
+                        <div class="form-text">Количество дней премиум подписки</div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="isPremium" checked>
+                            <label class="form-check-label" for="isPremium">
+                                Включить премиум подписку
+                            </label>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fas fa-crown me-2"></i>
+                        Установить подписку
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Сброс попыток -->
+    <div class="col-12 mb-4" id="resetManagement" style="display: none;">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-refresh me-2"></i>
+                    Сброс попыток
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <button class="btn btn-outline-danger w-100" onclick="resetGenerations('free')">
+                            <i class="fas fa-refresh me-2"></i>
+                            Сбросить бесплатные попытки
+                        </button>
+                    </div>
+                    <div class="col-md-6">
+                        <button class="btn btn-outline-warning w-100" onclick="resetGenerations('premium')">
+                            <i class="fas fa-refresh me-2"></i>
+                            Сбросить премиум попытки
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно подтверждения -->
+<div class="modal fade" id="confirmModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Подтверждение действия</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="confirmMessage"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="confirmButton">Подтвердить</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentUser = null;
+
+// Поиск пользователя
+function searchUser() {
+    const username = document.getElementById('usernameSearch').value.trim();
+    
+    if (!username) {
+        showNotification('Введите никнейм пользователя', 'error');
+        return;
+    }
+    
+    showLoading(true);
+    
+    fetch('/api/users/search', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username: username })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            currentUser = data.user;
+            displayUserInfo(data.user);
+            showNotification('Пользователь найден!', 'success');
+        } else {
+            showNotification(data.error || 'Пользователь не найден', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Ошибка поиска пользователя', 'error');
+    })
+    .finally(() => showLoading(false));
+}
+
+// Отображение информации о пользователе
+function displayUserInfo(user) {
+    document.getElementById('userId').textContent = user.id;
+    document.getElementById('userTelegramId').textContent = user.telegram_id;
+    document.getElementById('userUsername').textContent = '@' + user.username;
+    document.getElementById('userName').textContent = `${user.first_name} ${user.last_name || ''}`.trim();
+    
+    const statusBadge = user.is_premium ? 
+        '<span class="badge bg-success">Premium</span>' : 
+        '<span class="badge bg-secondary">Free</span>';
+    document.getElementById('userStatus').innerHTML = statusBadge;
+    
+    document.getElementById('userFreeGenerations').textContent = 
+        `${user.free_generations_used}/${user.free_generations_limit}`;
+    document.getElementById('userPremiumGenerations').textContent = 
+        `${user.premium_generations_used}/${user.premium_generations_limit}`;
+    
+    const premiumExpires = user.premium_expires_at ? 
+        new Date(user.premium_expires_at).toLocaleDateString('ru-RU') : 
+        'Не установлена';
+    document.getElementById('userPremiumExpires').textContent = premiumExpires;
+    
+    document.getElementById('userCreatedAt').textContent = 
+        new Date(user.created_at).toLocaleDateString('ru-RU');
+    
+    // Показываем блоки управления
+    document.getElementById('userInfo').style.display = 'block';
+    document.getElementById('generationsManagement').style.display = 'block';
+    document.getElementById('subscriptionManagement').style.display = 'block';
+    document.getElementById('resetManagement').style.display = 'block';
+}
+
+// Добавление попыток
+document.getElementById('addGenerationsForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    if (!currentUser) {
+        showNotification('Сначала найдите пользователя', 'error');
+        return;
+    }
+    
+    const freeGenerations = parseInt(document.getElementById('freeGenerations').value) || 0;
+    const premiumGenerations = parseInt(document.getElementById('premiumGenerations').value) || 0;
+    
+    if (freeGenerations === 0 && premiumGenerations === 0) {
+        showNotification('Укажите количество попыток для добавления', 'error');
+        return;
+    }
+    
+    showLoading(true);
+    
+    fetch(`/api/users/${currentUser.id}/add-generations`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            free_generations: freeGenerations,
+            premium_generations: premiumGenerations
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(data.message, 'success');
+            // Обновляем информацию о пользователе
+            currentUser.free_generations_limit = data.user.free_generations_limit;
+            currentUser.premium_generations_limit = data.user.premium_generations_limit;
+            displayUserInfo(currentUser);
+            // Сбрасываем форму
+            document.getElementById('addGenerationsForm').reset();
+        } else {
+            showNotification(data.error || 'Ошибка добавления попыток', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Ошибка добавления попыток', 'error');
+    })
+    .finally(() => showLoading(false));
+});
+
+// Управление подпиской
+document.getElementById('subscriptionForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    if (!currentUser) {
+        showNotification('Сначала найдите пользователя', 'error');
+        return;
+    }
+    
+    const days = parseInt(document.getElementById('premiumDays').value) || 30;
+    const isPremium = document.getElementById('isPremium').checked;
+    
+    const message = isPremium ? 
+        `Установить премиум подписку на ${days} дней?` : 
+        `Отменить премиум подписку?`;
+    
+    showConfirmModal(message, () => {
+        showLoading(true);
+        
+        fetch(`/api/users/${currentUser.id}/set-premium`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                days: days,
+                is_premium: isPremium
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification(data.message, 'success');
+                // Обновляем информацию о пользователе
+                currentUser.is_premium = data.user.is_premium;
+                currentUser.premium_expires_at = data.user.premium_expires_at;
+                displayUserInfo(currentUser);
+            } else {
+                showNotification(data.error || 'Ошибка установки подписки', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Ошибка установки подписки', 'error');
+        })
+        .finally(() => showLoading(false));
+    });
+});
+
+// Сброс попыток
+function resetGenerations(type) {
+    if (!currentUser) {
+        showNotification('Сначала найдите пользователя', 'error');
+        return;
+    }
+    
+    const message = type === 'free' ? 
+        'Сбросить использованные бесплатные попытки?' : 
+        'Сбросить использованные премиум попытки?';
+    
+    showConfirmModal(message, () => {
+        showLoading(true);
+        
+        const resetData = {};
+        if (type === 'free') {
+            resetData.reset_free = true;
+            resetData.reset_premium = false;
+        } else {
+            resetData.reset_free = false;
+            resetData.reset_premium = true;
+        }
+        
+        fetch(`/api/users/${currentUser.id}/reset-generations`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(resetData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification(data.message, 'success');
+                // Обновляем информацию о пользователе
+                currentUser.free_generations_used = data.user.free_generations_used;
+                currentUser.premium_generations_used = data.user.premium_generations_used;
+                displayUserInfo(currentUser);
+            } else {
+                showNotification(data.error || 'Ошибка сброса попыток', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Ошибка сброса попыток', 'error');
+        })
+        .finally(() => showLoading(false));
+    });
+}
+
+// Показ модального окна подтверждения
+function showConfirmModal(message, callback) {
+    document.getElementById('confirmMessage').textContent = message;
+    document.getElementById('confirmButton').onclick = () => {
+        callback();
+        bootstrap.Modal.getInstance(document.getElementById('confirmModal')).hide();
+    };
+    new bootstrap.Modal(document.getElementById('confirmModal')).show();
+}
+
+// Показ загрузки
+function showLoading(show) {
+    let loader = document.getElementById('loadingOverlay');
+    if (show && !loader) {
+        loader = document.createElement('div');
+        loader.id = 'loadingOverlay';
+        loader.className = 'position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center';
+        loader.style.cssText = 'background: rgba(0,0,0,0.5); z-index: 9999;';
+        loader.innerHTML = '<div class="spinner-border text-light" role="status"><span class="visually-hidden">Загрузка...</span></div>';
+        document.body.appendChild(loader);
+    } else if (!show && loader) {
+        loader.remove();
+    }
+}
+
+// Показ уведомлений
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'success' ? 'success' : type === 'error' ? 'danger' : 'info'} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Автоматическое удаление через 3 секунды
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+        }
+    }, 3000);
+}
+
+// Поиск по Enter
+document.getElementById('usernameSearch').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        searchUser();
+    }
+});
+</script>
+{% endblock %}

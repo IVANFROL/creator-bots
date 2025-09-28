@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+
+{% block title %}Детали бота - Bot Creator Admin{% endblock %}
+{% block page_title %}Детали бота{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-robot me-2"></i>
+                        {{ bot.name }}
+                    </h5>
+                    <div>
+                        {% if bot.status == 'active' %}
+                            <span class="badge bg-success fs-6">
+                                <i class="fas fa-check-circle me-1"></i>
+                                Активен
+                            </span>
+                        {% elif bot.status == 'inactive' %}
+                            <span class="badge bg-warning fs-6">
+                                <i class="fas fa-pause-circle me-1"></i>
+                                Неактивен
+                            </span>
+                        {% else %}
+                            <span class="badge bg-secondary fs-6">{{ bot.status }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h6>Основная информация</h6>
+                        <table class="table table-sm">
+                            <tr>
+                                <td><strong>ID:</strong></td>
+                                <td>{{ bot.id }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Название:</strong></td>
+                                <td>{{ bot.name }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Статус:</strong></td>
+                                <td>
+                                    {% if bot.status == 'active' %}
+                                        <span class="badge bg-success">Активен</span>
+                                    {% elif bot.status == 'inactive' %}
+                                        <span class="badge bg-warning">Неактивен</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ bot.status }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Владелец:</strong></td>
+                                <td>ID: {{ bot.owner_id }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Временные метки</h6>
+                        <table class="table table-sm">
+                            <tr>
+                                <td><strong>Создан:</strong></td>
+                                <td>{{ bot.created_at[:19] }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Обновлен:</strong></td>
+                                <td>{{ bot.last_updated[:19] }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <h6>Описание</h6>
+                    <div class="bg-light p-3 rounded">
+                        <p class="mb-0">{{ bot.description }}</p>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <h6>Сгенерированный код</h6>
+                    <div class="bg-dark text-light p-3 rounded">
+                        <pre class="mb-0"><code>{{ bot.generated_code[:500] }}{% if bot.generated_code|length > 500 %}...{% endif %}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-cogs me-2"></i>
+                    Действия
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-primary" onclick="downloadBot({{ bot.id }})">
+                        <i class="fas fa-download me-2"></i>
+                        Скачать код
+                    </button>
+                    
+                    {% if bot.status == 'active' %}
+                        <button class="btn btn-warning" onclick="toggleBotStatus({{ bot.id }}, 'active')">
+                            <i class="fas fa-pause me-2"></i>
+                            Остановить
+                        </button>
+                    {% else %}
+                        <button class="btn btn-success" onclick="toggleBotStatus({{ bot.id }}, 'inactive')">
+                            <i class="fas fa-play me-2"></i>
+                            Запустить
+                        </button>
+                    {% endif %}
+                    
+                    <button class="btn btn-info" onclick="viewLogs({{ bot.id }})">
+                        <i class="fas fa-file-alt me-2"></i>
+                        Просмотр логов
+                    </button>
+                    
+                    <button class="btn btn-secondary" onclick="editBot({{ bot.id }})">
+                        <i class="fas fa-edit me-2"></i>
+                        Редактировать
+                    </button>
+                    
+                    <button class="btn btn-danger" onclick="deleteBot({{ bot.id }})">
+                        <i class="fas fa-trash me-2"></i>
+                        Удалить
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    Статистика
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <h4 class="text-primary">0</h4>
+                        <small class="text-muted">Сообщений</small>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-success">0</h4>
+                        <small class="text-muted">Пользователей</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Logs Modal -->
+<div class="modal fade" id="logsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Логи бота</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="bg-dark text-light p-3 rounded">
+                    <pre id="logsContent" class="mb-0">Загрузка логов...</pre>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                <button type="button" class="btn btn-primary" onclick="refreshLogs()">Обновить</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Скачивание бота
+function downloadBot(botId) {
+    const link = document.createElement('a');
+    link.href = `/api/bots/${botId}/download`;
+    link.download = `bot_${botId}.zip`;
+    link.click();
+}
+
+// Переключение статуса бота
+function toggleBotStatus(botId, currentStatus) {
+    const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+    const action = newStatus === 'active' ? 'запустить' : 'остановить';
+    
+    if (confirm(`Вы уверены, что хотите ${action} бота?`)) {
+        fetch(`/api/bots/${botId}/status`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ status: newStatus })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Ошибка при обновлении статуса');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Ошибка при обновлении статуса');
+        });
+    }
+}
+
+// Просмотр логов
+function viewLogs(botId) {
+    const modal = new bootstrap.Modal(document.getElementById('logsModal'));
+    modal.show();
+    
+    // Имитация загрузки логов
+    setTimeout(() => {
+        document.getElementById('logsContent').textContent = `
+2024-09-28 18:00:00 - INFO - Bot started
+2024-09-28 18:00:01 - INFO - Connected to Telegram API
+2024-09-28 18:00:02 - INFO - Webhook set successfully
+2024-09-28 18:01:00 - INFO - Received message from user 123456789
+2024-09-28 18:01:01 - INFO - Processing command /start
+2024-09-28 18:01:02 - INFO - Response sent successfully
+        `;
+    }, 1000);
+}
+
+// Обновление логов
+function refreshLogs() {
+    document.getElementById('logsContent').textContent = 'Обновление логов...';
+    setTimeout(() => {
+        document.getElementById('logsContent').textContent = `
+2024-09-28 18:05:00 - INFO - Bot running normally
+2024-09-28 18:05:01 - INFO - Memory usage: 45MB
+2024-09-28 18:05:02 - INFO - Active connections: 1
+        `;
+    }, 1000);
+}
+
+// Редактирование бота
+function editBot(botId) {
+    alert('Функция редактирования будет добавлена в следующей версии');
+}
+
+// Удаление бота
+function deleteBot(botId) {
+    if (confirm(`Вы уверены, что хотите удалить бота ${botId}? Это действие нельзя отменить!`)) {
+        fetch(`/api/bots/${botId}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.href = '/bots';
+            } else {
+                alert('Ошибка при удалении бота');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Ошибка при удалении бота');
+        });
+    }
+}
+</script>
+{% endblock %}

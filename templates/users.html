@@ -1,0 +1,348 @@
+{% extends "base.html" %}
+
+{% block title %}Пользователи - Bot Creator Admin{% endblock %}
+{% block page_title %}Управление пользователями{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-users me-2"></i>
+                    Список пользователей
+                </h5>
+            </div>
+            <div class="col-auto">
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Поиск пользователей..." id="searchInput">
+                    <button class="btn btn-outline-secondary" type="button">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Telegram ID</th>
+                        <th>Имя пользователя</th>
+                        <th>Имя</th>
+                        <th>Premium</th>
+                        <th>Генерации</th>
+                        <th>Боты</th>
+                        <th>Регистрация</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr class="table-row-animated">
+                        <td>{{ user.id }}</td>
+                        <td>
+                            <code>{{ user.telegram_id }}</code>
+                        </td>
+                        <td>
+                            {% if user.username %}
+                                @{{ user.username }}
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {{ user.first_name }}
+                            {% if user.last_name %}
+                                {{ user.last_name }}
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if user.is_premium %}
+                                <span class="badge bg-success">
+                                    <i class="fas fa-crown me-1"></i>
+                                    Premium
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary">Free</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="d-flex flex-column">
+                                <small class="text-muted">Free: {{ user.free_generations_used }}/2</small>
+                                <small class="text-muted">Premium: {{ user.premium_generations_used }}</small>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-info">{{ user.bots_count }}</span>
+                        </td>
+                        <td>
+                            <small class="text-muted">
+                                {{ user.created_at[:10] }}
+                            </small>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-primary btn-animated hover-scale" onclick="viewUser({{ user.id }})">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-outline-{% if user.is_premium %}warning{% else %}success{% endif %} btn-animated hover-scale" 
+                                        onclick="togglePremium({{ user.id }}, {{ user.is_premium|lower }})">
+                                    <i class="fas fa-{% if user.is_premium %}times{% else %}crown{% endif %}"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer">
+        <div class="d-flex justify-content-between align-items-center">
+            <small class="text-muted">
+                Показано {{ users|length }} пользователей
+            </small>
+            <nav>
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" tabindex="-1">Предыдущая</a>
+                    </li>
+                    <li class="page-item active">
+                        <a class="page-link" href="#">1</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">2</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">3</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">Следующая</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- User Details Modal -->
+<div class="modal fade" id="userModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Детали пользователя</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="userModalBody">
+                <!-- Содержимое будет загружено динамически -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                <button type="button" class="btn btn-primary">Сохранить изменения</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Поиск пользователей
+document.getElementById('searchInput').addEventListener('input', function(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    const rows = document.querySelectorAll('tbody tr');
+    
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        if (text.includes(searchTerm)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+});
+
+// Просмотр деталей пользователя
+function viewUser(userId) {
+    // Здесь можно добавить загрузку детальной информации о пользователе
+    document.getElementById('userModalBody').innerHTML = `
+        <div class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Загрузка...</span>
+            </div>
+        </div>
+    `;
+    
+    const modal = new bootstrap.Modal(document.getElementById('userModal'));
+    modal.show();
+    
+    // Имитация загрузки данных
+    setTimeout(() => {
+        document.getElementById('userModalBody').innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Основная информация</h6>
+                    <p><strong>ID:</strong> ${userId}</p>
+                    <p><strong>Telegram ID:</strong> 123456789</p>
+                    <p><strong>Имя пользователя:</strong> @username</p>
+                </div>
+                <div class="col-md-6">
+                    <h6>Статистика</h6>
+                    <p><strong>Бесплатных генераций:</strong> 1/2</p>
+                    <p><strong>Premium генераций:</strong> 5</p>
+                    <p><strong>Создано ботов:</strong> 3</p>
+                </div>
+            </div>
+        `;
+    }, 1000);
+}
+
+// Переключение Premium статуса
+function togglePremium(userId, isPremium) {
+    const action = isPremium ? 'отключить' : 'включить';
+    const status = isPremium ? 'Free' : 'Premium';
+    
+    if (confirm(`Вы уверены, что хотите ${action} Premium статус для пользователя ${userId}?`)) {
+        fetch(`/api/users/${userId}/premium`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ is_premium: !isPremium })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Ошибка при обновлении статуса');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Ошибка при обновлении статуса');
+        });
+    }
+}
+
+// Функция поиска
+function searchUsers() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const rows = document.querySelectorAll('tbody tr');
+    
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        if (text.includes(searchTerm)) {
+            row.style.display = '';
+            row.classList.add('search-highlight');
+        } else {
+            row.style.display = 'none';
+            row.classList.remove('search-highlight');
+        }
+    });
+    
+    // Показываем количество найденных результатов
+    const visibleRows = Array.from(rows).filter(row => row.style.display !== 'none');
+    updateSearchResults(visibleRows.length, rows.length);
+}
+
+// Функция экспорта пользователей
+function exportUsers() {
+    const table = document.querySelector('table');
+    const rows = Array.from(table.querySelectorAll('tbody tr'));
+    
+    const csvContent = [
+        ['ID', 'Telegram ID', 'Username', 'Имя', 'Premium', 'Генерации', 'Боты', 'Регистрация'],
+        ...rows.map(row => [
+            row.cells[0].textContent.trim(),
+            row.cells[1].textContent.trim(),
+            row.cells[2].textContent.trim(),
+            row.cells[3].textContent.trim(),
+            row.cells[4].textContent.trim(),
+            row.cells[5].textContent.trim(),
+            row.cells[6].textContent.trim(),
+            row.cells[7].textContent.trim()
+        ])
+    ].map(row => row.join(',')).join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `users_export_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    showNotification('Данные экспортированы!', 'success');
+}
+
+// Функция обновления счетчика результатов
+function updateSearchResults(visible, total) {
+    let counter = document.getElementById('searchResults');
+    if (!counter) {
+        counter = document.createElement('div');
+        counter.id = 'searchResults';
+        counter.className = 'text-muted small mt-2';
+        document.getElementById('searchInput').parentNode.appendChild(counter);
+    }
+    counter.textContent = `Показано: ${visible} из ${total} пользователей`;
+}
+
+// Функция показа загрузки
+function showLoading(show) {
+    let loader = document.getElementById('loadingOverlay');
+    if (show && !loader) {
+        loader = document.createElement('div');
+        loader.id = 'loadingOverlay';
+        loader.className = 'position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center';
+        loader.style.cssText = 'background: rgba(0,0,0,0.5); z-index: 9999;';
+        loader.innerHTML = '<div class="spinner-border text-light" role="status"><span class="visually-hidden">Загрузка...</span></div>';
+        document.body.appendChild(loader);
+    } else if (!show && loader) {
+        loader.remove();
+    }
+}
+
+// Показ уведомлений
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'success' ? 'success' : type === 'error' ? 'danger' : 'info'} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Автоматическое удаление через 3 секунды
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+        }
+    }, 3000);
+}
+
+// Инициализация при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+    // Добавляем обработчики событий
+    document.getElementById('searchInput').addEventListener('input', searchUsers);
+    
+    // Добавляем анимации к строкам таблицы
+    const rows = document.querySelectorAll('tbody tr');
+    rows.forEach((row, index) => {
+        row.style.animationDelay = `${index * 0.05}s`;
+        row.classList.add('table-row-animated');
+    });
+    
+    // Инициализируем счетчик результатов
+    updateSearchResults(rows.length, rows.length);
+});
+</script>
+{% endblock %}

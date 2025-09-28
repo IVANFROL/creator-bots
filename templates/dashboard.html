@@ -1,0 +1,315 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Bot Creator Admin{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card animate-slide-in-up hover-lift">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">Всего пользователей</div>
+                        <div class="stat-number">{{ stats.total_users }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-users fa-2x text-white-50 animate-float"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card animate-slide-in-up hover-lift" style="animation-delay: 0.1s;">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">Premium пользователи</div>
+                        <div class="stat-number">{{ stats.premium_users }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-crown fa-2x text-white-50 animate-float"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card animate-slide-in-up hover-lift" style="animation-delay: 0.2s;">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">Всего ботов</div>
+                        <div class="stat-number">{{ stats.total_bots }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-robot fa-2x text-white-50 animate-float"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card animate-slide-in-up hover-lift" style="animation-delay: 0.3s;">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">Активные боты</div>
+                        <div class="stat-number">{{ stats.active_bots }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-check-circle fa-2x text-white-50 animate-float"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-line me-2"></i>
+                    Активность за последние 30 дней
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="activityChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Быстрая статистика
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Новые пользователи (30 дн.)</span>
+                        <strong class="text-primary">{{ stats.recent_users }}</strong>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Созданные боты (30 дн.)</span>
+                        <strong class="text-success">{{ stats.recent_bots }}</strong>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Генерации (30 дн.)</span>
+                        <strong class="text-warning">{{ stats.recent_generations }}</strong>
+                    </div>
+                </div>
+                <hr>
+                <div class="text-center">
+                    <small class="text-muted">
+                        <i class="fas fa-clock me-1"></i>
+                        Обновлено: {{ moment().format('DD.MM.YYYY HH:mm') }}
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-bolt me-2"></i>
+                    Быстрые действия
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <a href="/users" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-users me-2"></i>
+                            Управление пользователями
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="/bots" class="btn btn-outline-success w-100">
+                            <i class="fas fa-robot me-2"></i>
+                            Управление ботами
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="/generations" class="btn btn-outline-warning w-100">
+                            <i class="fas fa-magic me-2"></i>
+                            Просмотр генераций
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <button class="btn btn-outline-info w-100" onclick="refreshStats()">
+                            <i class="fas fa-sync me-2"></i>
+                            Обновить данные
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// График активности
+const ctx = document.getElementById('activityChart').getContext('2d');
+const activityChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: ['1 дн.', '7 дн.', '14 дн.', '21 дн.', '30 дн.'],
+        datasets: [{
+            label: 'Пользователи',
+            data: [{{ stats.recent_users // 6 }}, {{ stats.recent_users // 4 }}, {{ stats.recent_users // 2 }}, {{ stats.recent_users // 1.5 }}, {{ stats.recent_users }}],
+            borderColor: 'rgb(75, 192, 192)',
+            backgroundColor: 'rgba(75, 192, 192, 0.1)',
+            tension: 0.1,
+            fill: true
+        }, {
+            label: 'Боты',
+            data: [{{ stats.recent_bots // 6 }}, {{ stats.recent_bots // 4 }}, {{ stats.recent_bots // 2 }}, {{ stats.recent_bots // 1.5 }}, {{ stats.recent_bots }}],
+            borderColor: 'rgb(255, 99, 132)',
+            backgroundColor: 'rgba(255, 99, 132, 0.1)',
+            tension: 0.1,
+            fill: true
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            title: {
+                display: true,
+                text: 'Рост за последние 30 дней'
+            },
+            legend: {
+                position: 'top',
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                grid: {
+                    color: 'rgba(0, 0, 0, 0.1)'
+                }
+            },
+            x: {
+                grid: {
+                    color: 'rgba(0, 0, 0, 0.1)'
+                }
+            }
+        }
+    }
+});
+
+// Функция обновления статистики
+function refreshStats() {
+    fetch('/api/stats')
+        .then(response => response.json())
+        .then(data => {
+            // Обновляем все карточки
+            const statNumbers = document.querySelectorAll('.stat-number');
+            if (statNumbers.length >= 4) {
+                statNumbers[0].textContent = data.total_users;
+                statNumbers[1].textContent = data.premium_users;
+                statNumbers[2].textContent = data.total_bots;
+                statNumbers[3].textContent = data.active_bots;
+            }
+            
+            // Обновляем время последнего обновления
+            const lastUpdate = document.querySelector('.text-muted');
+            if (lastUpdate) {
+                lastUpdate.textContent = `Обновлено: ${new Date().toLocaleString('ru-RU')}`;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Ошибка при обновлении данных', 'error');
+        });
+}
+
+// Функция экспорта данных
+function exportData() {
+    const data = {
+        stats: {
+            total_users: {{ stats.total_users }},
+            premium_users: {{ stats.premium_users }},
+            total_bots: {{ stats.total_bots }},
+            active_bots: {{ stats.active_bots }},
+            recent_users: {{ stats.recent_users }},
+            recent_bots: {{ stats.recent_bots }},
+            recent_generations: {{ stats.recent_generations }}
+        },
+        export_date: new Date().toISOString()
+    };
+    
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `bot_creator_stats_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    showNotification('Данные экспортированы!', 'success');
+}
+
+// Функция обновления данных
+function refreshData() {
+    showNotification('Обновление данных...', 'info');
+    refreshStats();
+}
+
+// Показ уведомлений
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'success' ? 'success' : type === 'error' ? 'danger' : 'info'} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Автоматическое удаление через 3 секунды
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+        }
+    }, 3000);
+}
+
+// Автообновление каждые 5 минут
+setInterval(refreshStats, 300000);
+
+// Инициализация при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+    // Добавляем анимации к элементам
+    const cards = document.querySelectorAll('.card');
+    cards.forEach((card, index) => {
+        card.style.animationDelay = `${index * 0.1}s`;
+    });
+});
+</script>
+{% endblock %}
