@@ -3,51 +3,15 @@ version: '3.8'
 services:
   bot-creator:
     build: .
-    container_name: bot-creator
-    restart: unless-stopped
     ports:
-      - "8000:8000"  # Telegram bot
-      - "8001:8001"  # Admin panel
+      - "8001:8001"
     environment:
-      - TELEGRAM_BOT_TOKEN=8174154007:AAFxyC8wMnp9_T4mSzWtL1cogyGIidtihWg
-      - OPENAI_API_KEY=sk-c371a84e41814e5a8f0f6d7406c85d80
-      - DATABASE_URL=sqlite:///data/bot_creator.db
-      - HOST=0.0.0.0
-      - PORT=8000
-      - DEBUG=False
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ADMIN_USER_IDS=${ADMIN_USER_IDS}
     volumes:
-      - ./data:/app/data
-      - ./logs:/app/logs
+      - ./bot_creator.db:/app/bot_creator.db
       - ./bot_templates:/app/bot_templates
       - ./generated_bots:/app/generated_bots
-    depends_on:
-      - redis
-
-  redis:
-    image: redis:7-alpine
-    container_name: bot-creator-redis
     restart: unless-stopped
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-
-  # Опционально: PostgreSQL для production
-  postgres:
-    image: postgres:15-alpine
-    container_name: bot-creator-postgres
-    restart: unless-stopped
-    environment:
-      - POSTGRES_DB=bot_creator
-      - POSTGRES_USER=botcreator
-      - POSTGRES_PASSWORD=botcreator123
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    profiles:
-      - production
-
-volumes:
-  redis_data:
-  postgres_data:
+    container_name: bot-creator
